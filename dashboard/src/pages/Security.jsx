@@ -10,12 +10,12 @@ const Security = () => {
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
-    anti_nuke_enabled: true,
-    anti_raid_enabled: true,
-    anti_spam_enabled: true,
-    anti_scam_enabled: true,
-    anti_phishing_enabled: true,
-    anti_malware_enabled: true
+    anti_nuke_enabled: false,
+    anti_raid_enabled: false,
+    anti_spam_enabled: false,
+    anti_scam_enabled: false,
+    anti_phishing_enabled: false,
+    anti_malware_enabled: false
   });
 
   // Fetch configuration
