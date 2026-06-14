@@ -15,10 +15,11 @@ const Callback = () => {
     if (code && !hasExchanged.current) {
       hasExchanged.current = true;
       console.log('🔑 Received OAuth code:', code);
+      const redirect_uri = window.location.origin + '/auth/callback';
       fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code, redirect_uri })
       })
         .then((res) => {
           if (!res.ok) throw new Error('Authorization failed');

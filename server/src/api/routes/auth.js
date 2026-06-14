@@ -7,13 +7,14 @@ const { db, client: supabaseClient } = require('../../services/supabase');
 // GET /api/auth/discord-url
 // Generates Discord OAuth2 redirect URL
 router.get('/discord-url', (req, res) => {
+  const clientRedirectUri = req.query.redirect_uri || config.discordRedirectUri;
   if (config.isMockMode) {
     // In Mock Mode, direct callback simulation is triggered
-    return res.json({ url: `${config.discordRedirectUri}?code=mock_code_shadowblade` });
+    return res.json({ url: `${clientRedirectUri}?code=mock_code_shadowblade` });
   }
   
   const scopes = ['identify', 'guilds', 'guilds.members.read', 'email'];
-  const url = `https://discord.com/api/oauth2/authorize?client_id=${config.discordClientId}&redirect_uri=${encodeURIComponent(config.discordRedirectUri)}&response_type=code&scope=${encodeURIComponent(scopes.join(' '))}`;
+  const url = `https://discord.com/api/oauth2/authorize?client_id=${config.discordClientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=${encodeURIComponent(scopes.join(' '))}`;
   res.json({ url });
 });
 
@@ -48,12 +49,13 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Auth code is required for Discord OAuth.' });
     }
 
+    const clientRedirectUri = req.body.redirect_uri || config.discordRedirectUri;
     const tokenParams = new URLSearchParams({
       client_id: config.discordClientId,
       client_secret: config.discordClientSecret,
       grant_type: 'authorization_code',
       code,
-      redirect_uri: config.discordRedirectUri
+      redirect_uri: clientRedirectUri
     });
 
     console.log('📡 Exchanging authorization code with Discord...');

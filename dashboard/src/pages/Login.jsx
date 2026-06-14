@@ -46,7 +46,8 @@ const Login = () => {
     setErrorMsg('');
     try {
       // Get auth URL from backend
-      const res = await fetch('http://localhost:5000/api/auth/discord-url');
+      const redirectUriParam = encodeURIComponent(window.location.origin + '/auth/callback');
+      const res = await fetch(`http://localhost:5000/api/auth/discord-url?redirect_uri=${redirectUriParam}`);
       const data = await res.json();
       if (data.url) {
         // Redirect to Discord OAuth
