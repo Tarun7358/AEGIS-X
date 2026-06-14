@@ -45,7 +45,7 @@ const Backup = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ createdBy: '1002' })
+        body: JSON.stringify({})
       });
       const data = await res.json();
       if (data.success) {
