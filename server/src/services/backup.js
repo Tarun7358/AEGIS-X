@@ -35,16 +35,16 @@ const backupService = {
         }));
 
         const channels = guild.channels.cache.map(c => ({
-          name: c.name,
+          name: c.name || '',
           type: c.type,
-          topic: c.topic,
-          parentId: c.parentId,
-          permissionOverwrites: c.permissionOverwrites.cache.map(o => ({
+          topic: c.topic || '',
+          parentId: c.parentId || null,
+          permissionOverwrites: c.permissionOverwrites?.cache ? c.permissionOverwrites.cache.map(o => ({
             id: o.id,
             type: o.type,
-            allow: o.allow.bitfield.toString(),
-            deny: o.deny.bitfield.toString()
-          }))
+            allow: o.allow?.bitfield ? o.allow.bitfield.toString() : '0',
+            deny: o.deny?.bitfield ? o.deny.bitfield.toString() : '0'
+          })) : []
         }));
 
         backupData = {

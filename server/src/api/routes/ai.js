@@ -5,7 +5,7 @@ const ai = require('../../services/openai');
 const { authorizeRole } = require('../middleware/auth');
 
 // POST /api/ai/:guildId/audit
-router.post('/:guildId/audit', authorizeRole(['Owner', 'Security Director']), async (req, res) => {
+router.post('/:guildId/audit', authorizeRole(['Owner', 'Admin', 'Security Director']), async (req, res) => {
   try {
     const settings = await db.getSettings(req.params.guildId);
     const auditLogs = await db.getAuditLogs(req.params.guildId);
