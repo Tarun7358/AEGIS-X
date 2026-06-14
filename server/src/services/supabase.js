@@ -304,6 +304,32 @@ async function ensureGuildExists(guildId) {
 
 // Database helper functions to standardise data access for both actual Supabase and Mock DB
 const db = {
+  // User Management
+  async ensureUserExists(userId, username = 'UnknownUser', avatarUrl = null) {
+    if (shouldMock(userId)) return;
+    try {
+      const { data: userExists } = await supabaseClient
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (!userExists) {
+        await supabaseClient
+          .from('users')
+          .insert({
+            id: userId,
+            username: username || 'UnknownUser',
+            discriminator: '0000',
+            avatar_url: avatarUrl,
+            bot: false
+          });
+      }
+    } catch (err) {
+      console.warn(`⚠️ Failed to ensure user exists for ${userId}:`, err.message);
+    }
+  },
+
   // Guild Settings
   async getSettings(guildId) {
     if (shouldMock(guildId)) {

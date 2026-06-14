@@ -56,6 +56,7 @@ const riskEngine = {
     else if (score >= 30) level = 'YELLOW';
 
     // Log the Threat Score
+    await db.ensureUserExists(member.id, member.username, member.avatarUrl || member.avatar);
     await db.updateThreatScore(guildId, member.id, score, level, details.join('; '));
 
     return {
