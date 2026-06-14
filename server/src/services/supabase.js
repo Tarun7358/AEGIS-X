@@ -326,20 +326,113 @@ const db = {
       console.warn(`⚠️ Error fetching settings for guild ${guildId}:`, e.message);
     }
 
-    // Auto-create default settings containing ONLY schema-valid columns
+    // Dynamic Guild Analyzer: Automatically analyze the guild's current state on Discord to pre-fill settings
+    let botGuild = null;
+    try {
+      const { getBotClient } = require('../bot/client');
+      const client = getBotClient();
+      botGuild = client && client.guilds ? client.guilds.cache.get(guildId) : null;
+    } catch (err) {
+      console.warn('Could not retrieve guild from Discord client cache:', err.message);
+    }
+
+    const detectChannel = (keywords) => {
+      if (!botGuild || !botGuild.channels) return null;
+      const ch = botGuild.channels.cache.find(c => {
+        if (c.type !== 0 && c.type !== 'GUILD_TEXT') return false;
+        const name = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return keywords.some(kw => name.includes(kw));
+      });
+      return ch ? ch.name : null;
+    };
+
+    const detectRole = (keywords) => {
+      if (!botGuild || !botGuild.roles) return null;
+      const rl = botGuild.roles.cache.find(r => {
+        const name = r.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return keywords.some(kw => name.includes(kw));
+      });
+      return rl ? rl.name : null;
+    };
+
+    // Run heuristics to detect enabled features
+    let antiNuke = false;
+    let antiRaid = false;
+    let antiSpam = false;
+    let antiScam = false;
+    let antiPhishing = false;
+    let antiMalware = false;
+    let verification = false;
+    let economy = false;
+    let leveling = false;
+    let music = false;
+    let tickets = false;
+
+    if (botGuild) {
+      const vLevel = botGuild.verificationLevel;
+      if (vLevel && vLevel !== 0 && vLevel !== 'NONE') {
+        verification = true;
+        antiRaid = true;
+      }
+
+      const ecFilter = botGuild.explicitContentFilter;
+      if (ecFilter && ecFilter !== 0 && ecFilter !== 'DISABLED') {
+        antiMalware = true;
+        antiPhishing = true;
+      }
+
+      if (botGuild.mfaLevel === 1 || botGuild.mfaLevel === 'ELEVATED') {
+        antiNuke = true;
+      }
+
+      const isCommunity = botGuild.features?.includes('COMMUNITY');
+      if (isCommunity || (botGuild.memberCount && botGuild.memberCount > 50)) {
+        antiSpam = true;
+        antiScam = true;
+        antiPhishing = true;
+      }
+
+      if (detectChannel(['economy', 'shop', 'coins', 'work'])) economy = true;
+      if (detectChannel(['levels', 'rank', 'leveling'])) leveling = true;
+      if (detectChannel(['music', 'song', 'vc-music', 'radio'])) music = true;
+      if (detectChannel(['ticket', 'support', 'help-desk', 'report'])) tickets = true;
+    }
+
     const defaultSettings = {
       guild_id: guildId,
       prefix: '!',
-      role_owner: 'Owner',
-      role_admin: 'Admin',
-      role_security_director: 'Security Director',
-      role_moderator: 'Moderator',
-      anti_nuke_enabled: false,
-      anti_raid_enabled: false,
-      anti_spam_enabled: false,
-      anti_scam_enabled: false,
-      verification_enabled: false,
+      
+      role_owner: detectRole(['owner']) || 'Owner',
+      role_admin: detectRole(['admin', 'administrator']) || 'Admin',
+      role_security_director: detectRole(['securitydirector', 'security']) || 'Security Director',
+      role_moderator: detectRole(['moderator', 'mod']) || 'Moderator',
+      role_support_team: detectRole(['support', 'staff']) || 'Support Team',
+      role_dj: detectRole(['dj', 'music']) || 'DJ',
+      role_verified: detectRole(['verified', 'member']) || 'Verified',
+      role_unverified: detectRole(['unverified']) || 'Unverified',
+      role_quarantined: detectRole(['quarantined', 'muted']) || 'Quarantined',
+
+      channel_security_alerts: detectChannel(['securityalerts', 'alerts', 'aegisalerts', 'botalerts']),
+      channel_threat_feed: detectChannel(['threatfeed', 'threats', 'securitylogs']),
+      channel_incident_reports: detectChannel(['incidentreports', 'incidents', 'reports']),
+      channel_audit_logs: detectChannel(['auditlogs', 'auditlog', 'serverlogs', 'logs']),
+      channel_backup_status: detectChannel(['backupstatus', 'backups', 'backuplogs']),
+      channel_verification_review: detectChannel(['verificationreview', 'verifylogs', 'screening']),
+      channel_staff_actions: detectChannel(['staffactions', 'stafflogs', 'adminlogs']),
+
+      anti_nuke_enabled: antiNuke,
+      anti_raid_enabled: antiRaid,
+      anti_spam_enabled: antiSpam,
+      anti_scam_enabled: antiScam,
+      anti_phishing_enabled: antiPhishing,
+      anti_malware_enabled: antiMalware,
+      verification_enabled: verification,
       ai_moderation_enabled: false,
+      economy_enabled: economy,
+      leveling_enabled: leveling,
+      music_enabled: music,
+      tickets_enabled: tickets,
+      
       updated_at: new Date().toISOString()
     };
 
