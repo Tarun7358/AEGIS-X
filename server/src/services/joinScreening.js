@@ -180,7 +180,9 @@ const joinScreening = {
           mockDb.user_profiles[member.id].is_quarantined = true;
         }
       } else {
-        await supabaseClient.from('user_profiles').update({ is_quarantined: true }).eq('user_id', member.id).eq('guild_id', guildId).catch(() => {});
+        try {
+          await supabaseClient.from('user_profiles').update({ is_quarantined: true }).eq('user_id', member.id).eq('guild_id', guildId);
+        } catch (e) {}
       }
       await db.logIncident(guildId, {
         incident_type: 'QUARANTINE',
