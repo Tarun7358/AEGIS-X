@@ -1,0 +1,10 @@
+{
+  "name": "aegis-x",
+  "version": "1.0.0",
+  "description": "AEGIS X Discord Security Platform",
+  "scripts": {
+    "install-all": "npm install --prefix server && npm install --prefix dashboard",
+    "server": "npm run dev --prefix server",
+    "dashboard": "npm run dev --prefix dashboard"
+  }
+}

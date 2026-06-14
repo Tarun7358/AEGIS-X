@@ -1,0 +1,31 @@
+{
+  "name": "aegis-x-server",
+  "version": "1.0.0",
+  "description": "AEGIS X Unified Discord Bot, REST API, and Realtime Backend",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "security",
+    "moderation",
+    "dashboard",
+    "express"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "dependencies": {
+    "@discordjs/voice": "^0.16.1",
+    "@supabase/supabase-js": "^2.39.8",
+    "cors": "^2.8.5",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "jsonwebtoken": "^9.0.2",
+    "libsodium-wrappers": "^0.7.13",
+    "socket.io": "^4.7.5"
+  }
+}
