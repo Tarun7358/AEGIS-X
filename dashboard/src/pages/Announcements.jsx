@@ -66,11 +66,26 @@ const Announcements = () => {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [simulationResult, setSimulationResult] = useState(null);
+  const [guildRoles, setGuildRoles] = useState([]);
 
   // Refs for cursors to insert tags
   const welcomeTextRef = useRef(null);
   const dmTextRef = useRef(null);
   const leaveTextRef = useRef(null);
+
+  useEffect(() => {
+    if (!activeGuildId || !token) return;
+    fetch(`http://localhost:5000/api/guilds/${activeGuildId}/roles`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setGuildRoles(data);
+        }
+      })
+      .catch(err => console.error('Error fetching guild roles:', err));
+  }, [activeGuildId, token]);
 
   useEffect(() => {
     fetch(`http://localhost:5000/api/guilds/${activeGuildId}/settings`, {
@@ -648,18 +663,84 @@ const Announcements = () => {
                   </label>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="block text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                    Roles to Assign (Comma-separated)
+                    Roles to Assign
                   </label>
-                  <input
-                    type="text"
-                    value={settings.autorole_roles || ''}
-                    onChange={(e) => setSettings({ ...settings, autorole_roles: e.target.value })}
-                    className="w-full bg-cyber-darker border border-gray-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cyber-green transition-all"
-                    placeholder="e.g. Verified, Member, Newbie"
-                  />
-                  <span className="block text-[10px] text-gray-500">Provide role names or IDs, separated by commas.</span>
+                  
+                  {/* Selected Roles Pills */}
+                  <div className="flex flex-wrap gap-2 mb-1 p-2 bg-cyber-darker/40 border border-gray-800/80 rounded-xl min-h-[44px]">
+                    {(settings.autorole_roles || '')
+                      .split(',')
+                      .map(r => r.trim())
+                      .filter(Boolean)
+                      .map((roleNameOrId, index) => {
+                        const roleObj = guildRoles.find(gr => gr.name === roleNameOrId || gr.id === roleNameOrId);
+                        const displayColor = roleObj?.color || '#5865F2';
+                        return (
+                          <div 
+                            key={index} 
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-800 border border-gray-700 text-white"
+                            style={{ borderLeft: `3px solid ${displayColor}` }}
+                          >
+                            <span>{roleObj?.name || roleNameOrId}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentRoles = (settings.autorole_roles || '')
+                                  .split(',')
+                                  .map(r => r.trim())
+                                  .filter(Boolean);
+                                const updated = currentRoles.filter(r => r !== roleNameOrId);
+                                setSettings({ ...settings, autorole_roles: updated.join(', ') });
+                              }}
+                              className="text-gray-400 hover:text-red-400 font-bold ml-1 cursor-pointer"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    {!(settings.autorole_roles || '').trim() && (
+                      <span className="text-xs text-gray-500 italic flex items-center pl-1">No roles selected. Choose from the dropdown below.</span>
+                    )}
+                  </div>
+
+                  {/* Dropdown Selector */}
+                  <div className="relative">
+                    <select
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) return;
+                        const currentRoles = (settings.autorole_roles || '')
+                          .split(',')
+                          .map(r => r.trim())
+                          .filter(Boolean);
+                        if (!currentRoles.includes(val)) {
+                          currentRoles.push(val);
+                          setSettings({ ...settings, autorole_roles: currentRoles.join(', ') });
+                        }
+                        e.target.value = ''; // Reset selector
+                      }}
+                      className="w-full bg-cyber-darker border border-gray-800 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none focus:border-cyber-green transition-all"
+                    >
+                      <option value="">-- Select a Role --</option>
+                      {guildRoles
+                        .filter(gr => {
+                          const currentRoles = (settings.autorole_roles || '')
+                            .split(',')
+                            .map(r => r.trim())
+                            .filter(Boolean);
+                          return !currentRoles.includes(gr.name) && !currentRoles.includes(gr.id);
+                        })
+                        .map(gr => (
+                          <option key={gr.id} value={gr.name}>
+                            {gr.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <span className="block text-[10px] text-gray-500">Select roles from the dropdown to assign them automatically when members join.</span>
                 </div>
               </div>
             )}
