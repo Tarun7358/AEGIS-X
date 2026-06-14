@@ -343,6 +343,7 @@ const Announcements = () => {
             <div className="flex items-center gap-1.5">
               {embed.author_icon && (
                 <img 
+                  key={embed.author_icon}
                   src={resolveImagePlaceholder(embed.author_icon)} 
                   alt="" 
                   className="w-5 h-5 rounded-full object-cover flex-shrink-0" 
@@ -400,6 +401,7 @@ const Announcements = () => {
 
             {embed.thumbnail_url && (
               <img 
+                key={embed.thumbnail_url}
                 src={resolveImagePlaceholder(embed.thumbnail_url)} 
                 alt="" 
                 className="w-14 h-14 rounded object-cover flex-shrink-0"
@@ -413,6 +415,7 @@ const Announcements = () => {
           {embed.image_url && (
             <div className="mt-2 rounded overflow-hidden max-h-[200px]">
               <img 
+                key={embed.image_url}
                 src={resolveImagePlaceholder(embed.image_url)} 
                 alt="" 
                 className="max-w-full max-h-[200px] object-cover rounded"
@@ -427,6 +430,7 @@ const Announcements = () => {
             <div className="flex items-center gap-1.5 mt-2 pt-1 text-[9.5px] text-[#949ba4]">
               {embed.footer_icon && (
                 <img 
+                  key={embed.footer_icon}
                   src={resolveImagePlaceholder(embed.footer_icon)} 
                   alt="" 
                   className="w-4 h-4 rounded-full object-cover flex-shrink-0" 
