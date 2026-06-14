@@ -246,7 +246,7 @@ class MockDiscordClient {
       }
     }
 
-    return { userId: mockUserId, risk: riskResult, action, welcomeText, welcomeDmText };
+    return { userId: mockUserId, risk: screeningResult.riskResult, action, welcomeText, welcomeDmText };
   }
 
   async simulateMemberLeave(guildId, username) {
