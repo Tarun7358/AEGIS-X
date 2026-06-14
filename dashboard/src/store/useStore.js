@@ -119,7 +119,8 @@ const useStore = create((set, get) => ({
     const existingSocket = get().socket;
     if (existingSocket) return;
 
-    const socketUrl = 'http://localhost:5000';
+    const rawSocketUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const socketUrl = rawSocketUrl.endsWith('/') ? rawSocketUrl.slice(0, -1) : rawSocketUrl;
     console.log(`🔌 Connecting to Socket.IO Server: ${socketUrl}`);
     const socket = io(socketUrl, {
       auth: { token }
