@@ -103,7 +103,7 @@ const ServerSelector = () => {
         if (permissions.sendMessages) permissionsValue |= 0x800;
       }
       
-      const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=${permissionsValue}&scope=bot%20applications.commands&guild_id=${selectedGuildToInvite.id}&disable_guild_select=true`;
+      const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=${permissionsValue}&integration_type=0&scope=bot&guild_id=${selectedGuildToInvite.id}&disable_guild_select=true`;
       
       // Open the invite link in a new window/tab
       window.open(inviteUrl, '_blank');
