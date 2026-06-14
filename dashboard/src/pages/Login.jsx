@@ -139,7 +139,7 @@ const Login = () => {
               )}
             </button>
             <button
-              onClick={handleRealDiscordLogin}
+              onClick={() => window.open('https://discord.com/oauth2/authorize?client_id=1514678475988930691&permissions=8&integration_type=0&scope=bot', '_blank')}
               className="bg-cyber-darker hover:bg-cyber-dark border border-gray-800 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all"
             >
               <Bot size={18} className="text-[#bf55ec]" />
