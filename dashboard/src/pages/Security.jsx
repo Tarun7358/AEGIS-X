@@ -60,7 +60,7 @@ const Security = () => {
     setSettings(updatedSettings);
 
     try {
-      await fetch(`http://localhost:5000/api/guilds/${activeGuildId}/settings`, {
+      const res = await fetch(`http://localhost:5000/api/guilds/${activeGuildId}/settings`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -68,8 +68,14 @@ const Security = () => {
         },
         body: JSON.stringify({ [featureName]: newVal })
       });
+      if (!res.ok) {
+        // Revert toggle state on server/database error
+        setSettings(prev => ({ ...prev, [featureName]: !newVal }));
+      }
     } catch (err) {
       console.error(err);
+      // Revert toggle state on network error
+      setSettings(prev => ({ ...prev, [featureName]: !newVal }));
     }
   };
 

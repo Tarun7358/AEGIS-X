@@ -112,8 +112,8 @@ router.get('/:id/settings', authorizeRole(['Owner', 'Admin', 'Security Director'
   }
 });
 
-// POST /api/guilds/:id/settings
-router.post('/:id/settings', authorizeRole(['Owner', 'Admin', 'Security Director']), async (req, res) => {
+// POST & PUT /api/guilds/:id/settings
+const handleSettingsUpdate = async (req, res) => {
   try {
     const updated = await db.updateSettings(req.params.id, req.body);
 
@@ -130,7 +130,10 @@ router.post('/:id/settings', authorizeRole(['Owner', 'Admin', 'Security Director
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
+};
+
+router.post('/:id/settings', authorizeRole(['Owner', 'Admin', 'Security Director']), handleSettingsUpdate);
+router.put('/:id/settings', authorizeRole(['Owner', 'Admin', 'Security Director']), handleSettingsUpdate);
 
 // GET /api/guilds/:id/audit-logs
 router.get('/:id/audit-logs', authorizeRole(['Owner', 'Admin', 'Security Director', 'Moderator']), async (req, res) => {

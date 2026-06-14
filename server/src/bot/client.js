@@ -18,6 +18,22 @@ function formatAnnouncement(template, member, guild, memberCount) {
     .replace(/\[membercount\]/g, memberCount);
 }
 
+function resolveImagePlaceholder(url, member, guild) {
+  if (!url) return '';
+  const username = member?.username || member?.user?.username || 'Member';
+  const memberId = member?.id || '';
+  const userAvatar = member?.avatarUrl || member?.user?.avatarUrl || (member?.avatar ? `https://cdn.discordapp.com/avatars/${memberId}/${member.avatar}.png` : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100');
+  const guildIcon = (guild && typeof guild.iconURL === 'function' ? guild.iconURL() : guild?.icon_url) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=80';
+  
+  return url
+    .replace(/\[user_avatar\]/g, userAvatar)
+    .replace(/\[useravatar\]/g, userAvatar)
+    .replace(/\[avatar\]/g, userAvatar)
+    .replace(/\[server_icon\]/g, guildIcon)
+    .replace(/\[servericon\]/g, guildIcon)
+    .replace(/\[icon\]/g, guildIcon);
+}
+
 function buildDiscordEmbed(embedConfig, member, guild, memberCount) {
   if (!embedConfig || !embedConfig.enabled) return null;
   const embed = {};
@@ -44,17 +60,17 @@ function buildDiscordEmbed(embedConfig, member, guild, memberCount) {
       name: formatAnnouncement(embedConfig.author_name, member, guild, memberCount)
     };
     if (embedConfig.author_icon) {
-      embed.author.icon_url = embedConfig.author_icon;
+      embed.author.icon_url = resolveImagePlaceholder(embedConfig.author_icon, member, guild);
     }
   }
   if (embedConfig.thumbnail_url) {
     embed.thumbnail = {
-      url: embedConfig.thumbnail_url
+      url: resolveImagePlaceholder(embedConfig.thumbnail_url, member, guild)
     };
   }
   if (embedConfig.image_url) {
     embed.image = {
-      url: embedConfig.image_url
+      url: resolveImagePlaceholder(embedConfig.image_url, member, guild)
     };
   }
   if (embedConfig.footer_text) {
@@ -62,7 +78,7 @@ function buildDiscordEmbed(embedConfig, member, guild, memberCount) {
       text: formatAnnouncement(embedConfig.footer_text, member, guild, memberCount)
     };
     if (embedConfig.footer_icon) {
-      embed.footer.icon_url = embedConfig.footer_icon;
+      embed.footer.icon_url = resolveImagePlaceholder(embedConfig.footer_icon, member, guild);
     }
   }
   if (embedConfig.fields && Array.isArray(embedConfig.fields)) {

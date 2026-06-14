@@ -67,6 +67,7 @@ const Announcements = () => {
   const [saved, setSaved] = useState(false);
   const [simulationResult, setSimulationResult] = useState(null);
   const [guildRoles, setGuildRoles] = useState([]);
+  const [guildChannels, setGuildChannels] = useState([]);
 
   // Refs for cursors to insert tags
   const welcomeTextRef = useRef(null);
@@ -85,6 +86,17 @@ const Announcements = () => {
         }
       })
       .catch(err => console.error('Error fetching guild roles:', err));
+
+    fetch(`http://localhost:5000/api/guilds/${activeGuildId}/channels`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setGuildChannels(data);
+        }
+      })
+      .catch(err => console.error('Error fetching guild channels:', err));
   }, [activeGuildId, token]);
 
   useEffect(() => {
@@ -209,15 +221,55 @@ const Announcements = () => {
     }, 0);
   };
 
-  const renderPreviewText = (template) => {
+  const resolveImagePlaceholder = (url) => {
+    if (!url) return '';
+    const userAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+    const guildIcon = activeGuild?.icon_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=80';
+    return url
+      .replace(/\[user_avatar\]/g, userAvatar)
+      .replace(/\[useravatar\]/g, userAvatar)
+      .replace(/\[avatar\]/g, userAvatar)
+      .replace(/\[server_icon\]/g, guildIcon)
+      .replace(/\[servericon\]/g, guildIcon)
+      .replace(/\[icon\]/g, guildIcon);
+  };
+
+  const renderRichPreviewText = (template) => {
     if (!template) return '';
     const guildName = activeGuild?.name || 'AEGIS X HQ';
     const memberCount = activeGuild?.member_count || 1245;
-    return template
-      .replace(/\[user\]/g, '@ShadowBlade')
+
+    let resolved = template
       .replace(/\[username\]/g, 'ShadowBlade')
       .replace(/\[server\]/g, guildName)
       .replace(/\[membercount\]/g, memberCount.toString());
+
+    const parts = resolved.split(/(\[user\]|<#\d+>)/g);
+    return parts.map((part, index) => {
+      if (part === '[user]') {
+        return (
+          <span key={index} className="bg-[#5865F2]/30 text-[#c9cdfb] font-semibold px-1 py-0.5 rounded text-xs select-none">
+            @ShadowBlade
+          </span>
+        );
+      } else if (part.startsWith('<#') && part.endsWith('>')) {
+        const channelId = part.slice(2, -1);
+        const channelObj = guildChannels.find(c => c.id === channelId);
+        const channelName = channelObj ? channelObj.name : `channel-${channelId}`;
+        return (
+          <a
+            key={index}
+            href={`https://discord.com/channels/${activeGuildId}/${channelId}`}
+            target="_blank"
+            rel="noreferrer"
+            className="bg-[#5865F2]/10 hover:bg-[#5865F2] text-[#c9cdfb] hover:text-white font-medium px-1 py-0.5 rounded transition-colors inline-flex items-center gap-0.5 cursor-pointer text-xs"
+          >
+            #{channelName}
+          </a>
+        );
+      }
+      return part;
+    });
   };
 
   const triggerSimulation = async (type) => {
@@ -290,10 +342,16 @@ const Announcements = () => {
           {embed.author_name && (
             <div className="flex items-center gap-1.5">
               {embed.author_icon && (
-                <img src={embed.author_icon} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                <img 
+                  src={resolveImagePlaceholder(embed.author_icon)} 
+                  alt="" 
+                  className="w-5 h-5 rounded-full object-cover flex-shrink-0" 
+                  onLoad={(e) => { e.target.style.display = 'block'; }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
               )}
               <span className="font-semibold text-white text-[11px]">
-                {renderPreviewText(embed.author_name)}
+                {renderRichPreviewText(embed.author_name)}
               </span>
             </div>
           )}
@@ -303,10 +361,10 @@ const Announcements = () => {
             <div className="font-bold text-white text-[13px] leading-snug">
               {embed.title_url ? (
                 <a href={embed.title_url} target="_blank" rel="noopener noreferrer" className="text-[#00a8fc] hover:underline">
-                  {renderPreviewText(embed.title)}
+                  {renderRichPreviewText(embed.title)}
                 </a>
               ) : (
-                renderPreviewText(embed.title)
+                renderRichPreviewText(embed.title)
               )}
             </div>
           )}
@@ -316,7 +374,7 @@ const Announcements = () => {
             <div className="space-y-2 flex-1">
               {embed.description && (
                 <p className="whitespace-pre-wrap leading-snug text-[11.5px] text-[#dbdee1]">
-                  {renderPreviewText(embed.description)}
+                  {renderRichPreviewText(embed.description)}
                 </p>
               )}
 
@@ -329,10 +387,10 @@ const Announcements = () => {
                       className={`${field.inline ? 'col-span-1' : 'col-span-2'} min-w-[100px]`}
                     >
                       <span className="block font-bold text-white text-[10.5px]">
-                        {renderPreviewText(field.name)}
+                        {renderRichPreviewText(field.name)}
                       </span>
                       <span className="block text-[11px] text-[#dbdee1] mt-0.5">
-                        {renderPreviewText(field.value)}
+                        {renderRichPreviewText(field.value)}
                       </span>
                     </div>
                   ))}
@@ -342,9 +400,10 @@ const Announcements = () => {
 
             {embed.thumbnail_url && (
               <img 
-                src={embed.thumbnail_url} 
+                src={resolveImagePlaceholder(embed.thumbnail_url)} 
                 alt="" 
                 className="w-14 h-14 rounded object-cover flex-shrink-0"
+                onLoad={(e) => { e.target.style.display = 'block'; }}
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             )}
@@ -354,9 +413,10 @@ const Announcements = () => {
           {embed.image_url && (
             <div className="mt-2 rounded overflow-hidden max-h-[200px]">
               <img 
-                src={embed.image_url} 
+                src={resolveImagePlaceholder(embed.image_url)} 
                 alt="" 
                 className="max-w-full max-h-[200px] object-cover rounded"
+                onLoad={(e) => { e.target.style.display = 'block'; }}
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             </div>
@@ -366,9 +426,15 @@ const Announcements = () => {
           {(embed.footer_text || embed.footer_icon) && (
             <div className="flex items-center gap-1.5 mt-2 pt-1 text-[9.5px] text-[#949ba4]">
               {embed.footer_icon && (
-                <img src={embed.footer_icon} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                <img 
+                  src={resolveImagePlaceholder(embed.footer_icon)} 
+                  alt="" 
+                  className="w-4 h-4 rounded-full object-cover flex-shrink-0" 
+                  onLoad={(e) => { e.target.style.display = 'block'; }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
               )}
-              <span>{renderPreviewText(embed.footer_text || '')}</span>
+              <span>{renderRichPreviewText(embed.footer_text || '')}</span>
             </div>
           )}
         </div>
@@ -495,14 +561,19 @@ const Announcements = () => {
                   <label className="block text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                     Welcome Target Channel
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={settings.welcome_channel || ''}
                     onChange={(e) => setSettings({ ...settings, welcome_channel: e.target.value })}
-                    className="w-full bg-cyber-darker border border-gray-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cyber-green transition-all"
-                    placeholder="e.g. general"
-                  />
+                    className="w-full bg-cyber-darker border border-gray-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cyber-green transition-all cursor-pointer"
+                  >
+                    <option value="">-- Select Welcome Channel --</option>
+                    {guildChannels.map(c => (
+                      <option key={c.id} value={c.id}>
+                        #{c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="space-y-2">
@@ -605,14 +676,19 @@ const Announcements = () => {
                   <label className="block text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                     Farewell Target Channel
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={settings.leave_channel || ''}
                     onChange={(e) => setSettings({ ...settings, leave_channel: e.target.value })}
-                    className="w-full bg-cyber-darker border border-gray-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cyber-green transition-all"
-                    placeholder="e.g. general"
-                  />
+                    className="w-full bg-cyber-darker border border-gray-800 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-cyber-green transition-all cursor-pointer"
+                  >
+                    <option value="">-- Select Farewell Channel --</option>
+                    {guildChannels.map(c => (
+                      <option key={c.id} value={c.id}>
+                        #{c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="space-y-2">
@@ -1151,11 +1227,11 @@ const Announcements = () => {
                       <span className="bg-[#5865F2] text-[9px] px-1 py-0.2 rounded font-semibold text-white uppercase scale-90">Bot</span>
                       <span className="text-[10px] text-gray-400">Today at 10:15 PM</span>
                     </div>
-                    <p className="text-[#dbdee1] whitespace-pre-wrap leading-relaxed text-xs">
+                    <div className="text-[#dbdee1] whitespace-pre-wrap leading-relaxed text-xs">
                       {settings.welcome_dm_enabled 
-                        ? renderPreviewText(settings.welcome_dm_message)
+                        ? renderRichPreviewText(settings.welcome_dm_message)
                         : <span className="text-gray-500 italic">Direct messages welcome is disabled.</span>}
-                    </p>
+                    </div>
                     <DiscordEmbedPreview embed={settings.welcome_dm_embed} />
                   </div>
                 </div>
@@ -1197,7 +1273,13 @@ const Announcements = () => {
               // Chat Channel Preview (Welcome / Leave)
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-[10px] text-gray-400 border-b border-[#3f4147] pb-2">
-                  <span className="font-bold text-white"># {activeTab === 'welcome' ? settings.welcome_channel : settings.leave_channel}</span>
+                  <span className="font-bold text-white"># {
+                    (() => {
+                      const activeChanId = activeTab === 'welcome' ? settings.welcome_channel : settings.leave_channel;
+                      const ch = guildChannels.find(c => c.id === activeChanId);
+                      return ch ? ch.name : 'general';
+                    })()
+                  }</span>
                 </div>
                 <div className="flex gap-3 items-start">
                   <div className="w-8 h-8 rounded-full bg-cyber-green/20 flex items-center justify-center text-cyber-green font-bold text-xs">
@@ -1212,11 +1294,11 @@ const Announcements = () => {
                     <div className="text-[#dbdee1] whitespace-pre-wrap leading-relaxed text-xs">
                       {activeTab === 'welcome' ? (
                         settings.welcome_enabled 
-                          ? renderPreviewText(settings.welcome_message)
+                          ? renderRichPreviewText(settings.welcome_message)
                           : <span className="text-gray-500 italic">Welcome message is disabled.</span>
                       ) : (
                         settings.leave_enabled 
-                          ? renderPreviewText(settings.leave_message)
+                          ? renderRichPreviewText(settings.leave_message)
                           : <span className="text-gray-500 italic">Farewell message is disabled.</span>
                       )}
                     </div>

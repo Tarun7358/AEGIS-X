@@ -476,7 +476,11 @@ const db = {
         'channel_verification_review', 'channel_staff_actions', 'anti_nuke_enabled', 
         'anti_raid_enabled', 'anti_spam_enabled', 'anti_scam_enabled', 'anti_phishing_enabled', 
         'anti_malware_enabled', 'verification_enabled', 'ai_moderation_enabled', 
-        'economy_enabled', 'leveling_enabled', 'music_enabled', 'tickets_enabled'
+        'economy_enabled', 'leveling_enabled', 'music_enabled', 'tickets_enabled',
+        'welcome_enabled', 'welcome_channel', 'welcome_message', 'welcome_dm_enabled',
+        'welcome_dm_message', 'leave_enabled', 'leave_channel', 'leave_message',
+        'welcome_embed', 'welcome_dm_embed', 'leave_embed', 'autorole_enabled',
+        'autorole_roles'
       ];
       for (const key of Object.keys(settings)) {
         if (allowedColumns.includes(key)) {

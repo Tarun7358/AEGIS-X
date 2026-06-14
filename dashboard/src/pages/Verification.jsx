@@ -67,17 +67,29 @@ const MethodsPanel = ({ token, activeGuildId }) => {
   const toggle = async (key) => {
     if (!settings) return;
     const updated = { ...settings, [key]: !settings[key] };
+    const originalVal = settings[key];
     setSettings(updated);
     setSaving(true);
     try {
-      await fetch(`http://localhost:5000/api/guilds/${activeGuildId}/settings`, {
+      const res = await fetch(`http://localhost:5000/api/guilds/${activeGuildId}/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ [key]: updated[key] })
       });
-      showToast(`✅ Setting updated`);
-    } catch { showToast('⚠️ Error saving'); }
-    finally { setSaving(false); }
+      if (res.ok) {
+        showToast(`✅ Setting updated`);
+      } else {
+        // Revert toggle state on server/database error
+        setSettings(prev => ({ ...prev, [key]: originalVal }));
+        showToast('⚠️ Error saving');
+      }
+    } catch (err) {
+      // Revert toggle state on network error
+      setSettings(prev => ({ ...prev, [key]: originalVal }));
+      showToast('⚠️ Error saving');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const methods = [
