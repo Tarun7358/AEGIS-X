@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Server, Shield, Users, LogOut, CheckCircle, AlertTriangle, 
-  HelpCircle, Sparkles, Plus, ShieldCheck, ChevronRight
+  HelpCircle, Sparkles, Plus, ShieldCheck, ChevronRight, RefreshCw
 } from 'lucide-react';
 import useStore from '../store/useStore';
 
@@ -27,6 +27,7 @@ const ServerSelector = () => {
     sendMessages: true
   });
   const [inviting, setInviting] = useState(false);
+  const [refreshingList, setRefreshingList] = useState(false);
 
   const handleInviteClick = (guild) => {
     setSelectedGuildToInvite(guild);
@@ -185,13 +186,26 @@ const ServerSelector = () => {
         </div>
 
         {/* Server Selection Title */}
-        <div>
-          <h3 className="text-xl font-black text-white m-0 tracking-wide uppercase font-mono">
-            Select Guild Workspace
-          </h3>
-          <p className="text-sm text-gray-400 mt-1 m-0">
-            Choose a guild console workspace below to establish security uplink and configuration tools.
-          </p>
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h3 className="text-xl font-black text-white m-0 tracking-wide uppercase font-mono">
+              Select Guild Workspace
+            </h3>
+            <p className="text-sm text-gray-400 mt-1 m-0 font-sans">
+              Choose a guild console workspace below to establish security uplink and configuration tools.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setRefreshingList(true);
+              fetchGuilds(true).finally(() => setRefreshingList(false));
+            }}
+            disabled={refreshingList}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[#ff4655]/30 hover:border-[#ff4655] bg-[#ff4655]/5 hover:bg-[#ff4655]/10 text-white font-bold text-xs rounded-xl transition-all shadow-glow hover:shadow-neon-red disabled:opacity-50 font-mono uppercase tracking-wider whitespace-nowrap self-start sm:self-auto"
+          >
+            <RefreshCw size={14} className={refreshingList ? 'animate-spin text-[#ff4655]' : 'text-[#ff4655]'} />
+            {refreshingList ? 'Refreshing...' : 'Refresh List'}
+          </button>
         </div>
 
         {/* Servers Grid */}
